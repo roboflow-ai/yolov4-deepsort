@@ -85,6 +85,9 @@ python clip_object_tracker.py --weights models/yolov5s.pt --source data/video/ca
 
 Run with YOLOv4
 ```bash
+# Download YOLOv4 weights from the following link and paste them in the ./data folder
+https://drive.google.com/open?id=1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT
+
 # Convert darknet weights to tensorflow model
 python save_model.py --model yolov4 
 
