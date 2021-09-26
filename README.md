@@ -76,6 +76,8 @@ Run with YOLOv5
 
 python clip_object_tracker.py --weights models/yolov5s.pt --source data/video/cards.mp4 --detection-engine yolov5 --info
 ```
+python clip_object_tracker.py --weights yolov4.weights --cfg yolov4.cfg --names coco.names --source data/video/cars.mp4 --detection-engine yolov4 --info
+
 (by default, output will be in runs/detect/exp[num])
 
 <figure class="video_container">

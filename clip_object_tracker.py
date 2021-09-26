@@ -25,6 +25,7 @@ from deep_sort.tracker import Tracker
 from tools import generate_clip_detections as gdet
 
 from utils.yolov5 import Yolov5Engine
+from utils.yolov4 import Yolov4Engine
 
 classes = []
 
@@ -41,7 +42,7 @@ def update_tracks(tracker, frame_count, save_txt, txt_path, save_img, view_img, 
         xyxy = track.to_tlbr()
         class_num = track.class_num
         bbox = xyxy
-        class_name = names[int(class_num)] if opt.detection_engine != "roboflow" else class_num
+        class_name = names[int(class_num)] if opt.detection_engine == "yolov5" else class_num
         if opt.info:
             print("Tracker ID: {}, Class: {}, BBox Coords (xmin, ymin, xmax, ymax): {}".format(
                 str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
@@ -103,6 +104,9 @@ def detect(save_img=False):
         yolov5_engine = Yolov5Engine(opt.weights, device, opt.classes, opt.confidence, opt.overlap, opt.agnostic_nms, opt.augment, half)
         global names
         names = yolov5_engine.get_names()
+    elif opt.detection_engine == "yolov4":
+        yolov4_engine = Yolov4Engine(opt.weights, opt.cfg, device, opt.names, opt.classes, opt.confidence, opt.overlap, opt.agnostic_nms, opt.augment, half)
+
     # initialize tracker
     tracker = Tracker(metric)
 
@@ -147,17 +151,23 @@ def detect(save_img=False):
         p, s, im0, frame = path, '', im0s, getattr(dataset, 'frame', 0)
 
         # choose between prediction engines (yolov5 and roboflow)
-        if (opt.detection_engine == "roboflow"):
+        if opt.detection_engine == "roboflow":
             pred, classes = predict_image(im0, opt.api_key, opt.url, opt.confidence, opt.overlap, frame_count)
             pred = [torch.tensor(pred)]
-        else:
+        elif opt.detection_engine == "yolov5":
             print("yolov5 inference")
             pred = yolov5_engine.infer(img)
+        else:
+            print("yolov4 inference {}".format(im0.shape))
+            pred = yolov4_engine.infer(im0)
+            pred, classes = yolov4_engine.postprocess(pred, im0.shape)
+            pred = [torch.tensor(pred)]
 
         t2 = time_synchronized()
-
+        print("pred {}".format(pred))
         # Process detections
         for i, det in enumerate(pred):  # detections per image
+            print("det {}".format(det))
             #moved up to roboflow inference
             """if webcam:  # batch_size >= 1
                 p, s, im0, frame = path[i], '%g: ' % i, im0s[i].copy(
@@ -175,7 +185,7 @@ def detect(save_img=False):
             if len(det):
 
                 print("\n[Detections]")
-                if opt.detection_engine == "roboflow":
+                if opt.detection_engine == "roboflow"''' or opt.detection_engine == "yolov4"''':
                     # Print results
                     clss = np.array(classes)
                     for c in np.unique(clss):
@@ -186,11 +196,33 @@ def detect(save_img=False):
                     bboxes = trans_bboxes[:, :4].cpu()
                     confs = det[:, 4]
 
-                else:
-                    # Rescale boxes from img_size to im0 size
-                    det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
+                elif opt.detection_engine == "yolov4":
 
+                    print("size metric {}".format(img.shape[2:]))
                     # Print results
+                    # Rescale boxes from img_size to im0 size
+                    #det[:, :4] = scale_coords([1,1], det[:, :4], im0.shape).round()
+                    print("det: {}".format(det))
+                    clss = np.array(classes)
+                    for c in np.unique(clss):
+                        n = (clss == c).sum()  # detections per class
+                        s += f'{n} {c}, '  # add to string
+
+
+                    # Transform bboxes from tlbr to tlwh
+                    trans_bboxes = det[:, :4].clone()
+                    bboxes = trans_bboxes[:, :4]
+                    confs = det[:, 4]
+                    print("bboxes: {}".format(bboxes))
+
+                    print(s)
+                else:
+
+                    print("size metric {}".format(img.shape[2:]))
+                    # Print results
+                    # Rescale boxes from img_size to im0 size
+
+                    det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
                     for c in det[:, -1].unique():
                         n = (det[:, -1] == c).sum()  # detections per class
                         s += f'{n} {names[int(c)]}s, '  # add to string
@@ -200,6 +232,7 @@ def detect(save_img=False):
                     trans_bboxes[:, 2:] -= trans_bboxes[:, :2]
                     bboxes = trans_bboxes[:, :4]
                     confs = det[:, 4]
+                    print("bboxes: {}".format(bboxes))
                     class_nums = det[:, -1]
                     classes = class_nums
 
@@ -267,6 +300,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str,
                         default='yolov5s.pt', help='model.pt path(s)')
+    parser.add_argument('--cfg', type=str,
+                        default='yolov4.cfg', help='yolov4 model cfg file path')
+    parser.add_argument('--names', type=str,
+                        default='coco.names', help='yolov4 names file, file path')
     # file/folder, 0 for webcam
     parser.add_argument('--source', type=str,
                         default='data/images', help='source')

@@ -80,7 +80,7 @@ class ImageEncoder(object):
 
     def __call__(self, data_x, batch_size=32):
         out = []
-
+        data_x = [i for i in data_x if i is not None]
         for patch in range(len(data_x)):
             if self.device == "cpu":
                 img = self.transform(Image.fromarray(data_x[patch]))
@@ -102,8 +102,8 @@ def create_box_encoder(model, transform, batch_size=32, device="cpu"):
             patch = extract_image_patch(image, box)
             if patch is None:
                 print("WARNING: Failed to extract image patch: %s." % str(box))
-                patch = np.random.uniform(
-                    0., 255., patch.shape).astype(np.uint8)
+                #patch = np.random.uniform(
+                #    0., 255., patch.shape).astype(np.uint8)
             image_patches.append(patch)
         #image_patches = np.array(image_patches)
         return image_encoder(image_patches, batch_size)

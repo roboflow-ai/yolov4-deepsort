@@ -231,3 +231,7 @@ fabric.properties
 
 CLIP-repo/
 clip/
+
+pytorch-YOLOv4/
+yolov4.weights
+yolov4.cfg
