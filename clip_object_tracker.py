@@ -93,7 +93,8 @@ def detect(save_img=False):
     model_filename = "ViT-B/32"
     device = "cuda" if torch.cuda.is_available() else "cpu"
     half = device != "cpu"
-    model, transform = clip.load(model_filename, device=device)
+    model, transform = clip.load(model_filename, device=device, jit=False)
+    model.eval()
     encoder = gdet.create_box_encoder(model, transform, batch_size=1, device=device)
     # calculate cosine distance metric
     metric = nn_matching.NearestNeighborDistanceMetric(
@@ -185,7 +186,7 @@ def detect(save_img=False):
             if len(det):
 
                 print("\n[Detections]")
-                if opt.detection_engine == "roboflow"''' or opt.detection_engine == "yolov4"''':
+                if opt.detection_engine == "roboflow":
                     # Print results
                     clss = np.array(classes)
                     for c in np.unique(clss):
@@ -211,7 +212,7 @@ def detect(save_img=False):
 
                     # Transform bboxes from tlbr to tlwh
                     trans_bboxes = det[:, :4].clone()
-                    bboxes = trans_bboxes[:, :4]
+                    bboxes = trans_bboxes[:, :4].cpu()
                     confs = det[:, 4]
                     print("bboxes: {}".format(bboxes))
 
@@ -230,7 +231,7 @@ def detect(save_img=False):
                     # Transform bboxes from tlbr to tlwh
                     trans_bboxes = det[:, :4].clone()
                     trans_bboxes[:, 2:] -= trans_bboxes[:, :2]
-                    bboxes = trans_bboxes[:, :4]
+                    bboxes = trans_bboxes[:, :4].cpu()
                     confs = det[:, 4]
                     print("bboxes: {}".format(bboxes))
                     class_nums = det[:, -1]
@@ -242,7 +243,8 @@ def detect(save_img=False):
 
                 # encode yolo detections and feed to tracker
                 features = encoder(im0, bboxes)
-                detections = [Detection(bbox.cpu(), conf, class_num, feature) for bbox, conf, class_num, feature in zip(
+                print("[ZSOT features] features: {}".format(features))
+                detections = [Detection(bbox, conf, class_num, feature) for bbox, conf, class_num, feature in zip(
                     bboxes, confs, classes, features)]
 
                 # run non-maxima supression
