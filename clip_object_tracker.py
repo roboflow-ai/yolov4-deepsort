@@ -138,7 +138,8 @@ def detect(save_img=False):
 
     frame_count = 0
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
-    _ = yolov5_engine.infer(img.half() if half else img) if device.type != 'cpu' else None  # run once
+    if opt.detection_engine == "yolov5":
+        _ = yolov5_engine.infer(img.half() if half else img) if device.type != 'cpu' else None  # run once
     for path, img, im0s, vid_cap in dataset:
 
         img = torch.from_numpy(img).to(device)
