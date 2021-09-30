@@ -52,12 +52,10 @@ def min_cost_matching(
     if len(detection_indices) == 0 or len(track_indices) == 0:
         return [], track_indices, detection_indices  # Nothing to match.
 
-    print("[ZSOT deep_sort.detections] detections: {}".format(detections))
     cost_matrix = distance_metric(
         tracks, detections, track_indices, detection_indices)
     cost_matrix[cost_matrix > max_distance] = max_distance + 1e-5
     cost_matrix = np.nan_to_num(cost_matrix, copy=True, nan=0.0, posinf=None, neginf=None)
-    print("[ZSOT deep_sort.linear_assignment] cost_matrix: {}".format(cost_matrix))
     indices = linear_sum_assignment(cost_matrix)
     indices = np.asarray(indices)
     indices = np.transpose(indices)
