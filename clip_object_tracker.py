@@ -12,7 +12,7 @@ import numpy as np
 
 from models.experimental import attempt_load
 from utils.datasets import LoadStreams, LoadImages
-from utils.general import xyxy2xywh, \
+from utils.general import xyxy2xywh, xywh2xyxy, \
     strip_optimizer, set_logging, increment_path, scale_coords
 from utils.plots import plot_one_box
 from utils.torch_utils import select_device, time_synchronized
@@ -48,8 +48,7 @@ def update_tracks(tracker, frame_count, save_txt, txt_path, save_img, view_img, 
                 str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
 
         if save_txt:  # Write to file
-            xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)
-                              ) / gn).view(-1).tolist()  # normalized xywh
+            xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
 
             with open(txt_path + '.txt', 'a') as f:
                 f.write('frame: {}; track: {}; class: {}; bbox: {};\n'.format(frame_count, track.track_id, class_num,
@@ -166,10 +165,8 @@ def detect(save_img=False):
             pred = [torch.tensor(pred)]
 
         t2 = time_synchronized()
-        print("pred {}".format(pred))
         # Process detections
         for i, det in enumerate(pred):  # detections per image
-            print("det {}".format(det))
             #moved up to roboflow inference
             """if webcam:  # batch_size >= 1
                 p, s, im0, frame = path[i], '%g: ' % i, im0s[i].copy(
@@ -200,11 +197,9 @@ def detect(save_img=False):
 
                 elif opt.detection_engine == "yolov4":
 
-                    print("size metric {}".format(img.shape[2:]))
                     # Print results
                     # Rescale boxes from img_size to im0 size
                     #det[:, :4] = scale_coords([1,1], det[:, :4], im0.shape).round()
-                    print("det: {}".format(det))
                     clss = np.array(classes)
                     for c in np.unique(clss):
                         n = (clss == c).sum()  # detections per class
@@ -215,12 +210,14 @@ def detect(save_img=False):
                     trans_bboxes = det[:, :4].clone()
                     bboxes = trans_bboxes[:, :4].cpu()
                     confs = det[:, 4]
-                    print("bboxes: {}".format(bboxes))
+
+                    """for idx, box in enumerate(bboxes):
+                        plot_one_box(xywh2xyxy(torch.tensor(box).view(1, 4))[0], im0, label=classes[idx],
+                                     color=get_color_for(classes[idx]), line_thickness=opt.thickness)"""
 
                     print(s)
                 else:
 
-                    print("size metric {}".format(img.shape[2:]))
                     # Print results
                     # Rescale boxes from img_size to im0 size
 
@@ -234,7 +231,6 @@ def detect(save_img=False):
                     trans_bboxes[:, 2:] -= trans_bboxes[:, :2]
                     bboxes = trans_bboxes[:, :4].cpu()
                     confs = det[:, 4]
-                    print("bboxes: {}".format(bboxes))
                     class_nums = det[:, -1]
                     classes = class_nums
 
@@ -244,7 +240,6 @@ def detect(save_img=False):
 
                 # encode yolo detections and feed to tracker
                 features = encoder(im0, bboxes)
-                print("[ZSOT features] features: {}".format(features))
                 detections = [Detection(bbox, conf, class_num, feature) for bbox, conf, class_num, feature in zip(
                     bboxes, confs, classes, features)]
 
