@@ -68,13 +68,13 @@ Run with Roboflow
 
 ```bash
 
-python clip_object_tracker.py --source data/video/cards.mp4 --url https://detect.roboflow.com/playing-cards-ow27d/1 --api_key ROBOFLOW_API_KEY --info
+python clip_object_tracker.py --source data/video/fish.mp4 --url https://detect.roboflow.com/playing-cards-ow27d/1 --api_key ROBOFLOW_API_KEY --info
 ```
 
 Run with YOLOv5
 ```bash
 
-python clip_object_tracker.py --weights models/yolov5s.pt --source data/video/cards.mp4 --detection-engine yolov5 --info
+python clip_object_tracker.py --weights models/yolov5s.pt --source data/video/fish.mp4 --detection-engine yolov5 --info
 ```
 (by default, output will be in runs/detect/exp[num])
 
