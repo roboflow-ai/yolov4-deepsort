@@ -65,6 +65,7 @@ def extract_image_patch(image, bbox, patch_shape=None):
         return None
     sx, sy, ex, ey = bbox
     image = image[sy:ey, sx:ex]
+
     #image = cv2.resize(image, tuple(patch_shape[::-1]))
     return image
 
@@ -80,7 +81,9 @@ class ImageEncoder(object):
 
     def __call__(self, data_x, batch_size=32):
         out = []
+        #data_x = [i for i in data_x if i is not None]
 
+        #print("[ZSOT ImageEncoder] num_none: {}".format(len(num_none)))
         for patch in range(len(data_x)):
             if self.device == "cpu":
                 img = self.transform(Image.fromarray(data_x[patch]))
@@ -89,6 +92,13 @@ class ImageEncoder(object):
             out.append(img)
 
         features = self.model.encode_image(torch.stack(out)).cpu().numpy()
+        for idx, i in enumerate(features):
+            if np.isnan(i[0]):
+                print("nan values")
+                # features[idx] = np.zeros(512)
+                # cv2.imshow("image", data_x[idx])
+                # cv2.waitKey(0)
+
         return features
 
 
@@ -100,10 +110,11 @@ def create_box_encoder(model, transform, batch_size=32, device="cpu"):
         for box in boxes:
             #print("extracting box {} from image {}".format(box, image.shape))
             patch = extract_image_patch(image, box)
+
             if patch is None:
                 print("WARNING: Failed to extract image patch: %s." % str(box))
                 patch = np.random.uniform(
-                    0., 255., patch.shape).astype(np.uint8)
+                    0., 255., image.shape).astype(np.uint8)
             image_patches.append(patch)
         #image_patches = np.array(image_patches)
         return image_encoder(image_patches, batch_size)

@@ -55,6 +55,14 @@ def min_cost_matching(
     cost_matrix = distance_metric(
         tracks, detections, track_indices, detection_indices)
     cost_matrix[cost_matrix > max_distance] = max_distance + 1e-5
+
+    # Start of Edited Block by Maxwell Stone
+    cost_matrix = np.nan_to_num(cost_matrix, copy=True, nan=0.0, posinf=None, neginf=None)
+    # This code is not from the original DeepSORT algorithm and should be considered if there are tracking issues.
+    # This line replaces Nan values, caused by incorrect CLIP detections, with 0's to stop from crashing.
+    # **Warning. Issues may arise from this config. It is not completely tested.
+    # End of Edited Block by Maxwell Stone
+
     indices = linear_sum_assignment(cost_matrix)
     indices = np.asarray(indices)
     indices = np.transpose(indices)
