@@ -89,7 +89,7 @@ def detect(save_img=False):
     nn_budget = opt.nn_budget
 
     # initialize deep sort
-    model_filename = "ViT-B/32"
+    model_filename = "ViT-B/16"
     device = "cuda" if torch.cuda.is_available() else "cpu"
     half = device != "cpu"
     model, transform = clip.load(model_filename, device=device, jit=False)
