@@ -38,6 +38,10 @@ To use YOLOv5 as your detection engine:
 
 Follow Roboflow's [Train YOLOv5 on Custom Data Tutorial](https://blog.roboflow.com/how-to-train-yolov5-on-a-custom-dataset/)
 
+The YOLOv5 implementation uses [this colab notebook](https://colab.research.google.com/drive/1gDZ2xcTOgR39tGGs-EZ6i3RTs16wmzZQ)
+
+The YOLOv5 implementation is currently compatible with this commit hash of YOLOv5 `886f1c03d839575afecb059accf74296fad395b6`
+
 ## Performing Object Tracking
 
 ###Clone repositories
@@ -70,6 +74,8 @@ pip install opencv pycocotools tensorflow
 
 python clip_object_tracker.py --source data/video/fish.mp4 --url https://detect.roboflow.com/playing-cards-ow27d/1 --api_key ROBOFLOW_API_KEY --info
 ```
+
+**NOTE you must provide a valid API key from [Roboflow](docs.roboflow.com)
 
 ###Run with YOLOv5
 ```bash
