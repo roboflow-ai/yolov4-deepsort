@@ -1,7 +1,7 @@
 from tool.utils import *
 from tool.torch_utils import *
 from tool.darknet2pytorch import Darknet
-from utils.general import non_max_suppression, xyxy2xywh
+from yolov5.utils.general import non_max_suppression, xyxy2xywh
 import cv2
 import torch
 

@@ -22,4 +22,4 @@ pandas
 
 # clip
 ftfy==6.0.3
-regex==2.5.86
+regex

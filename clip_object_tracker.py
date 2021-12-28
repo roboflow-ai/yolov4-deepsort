@@ -2,7 +2,8 @@ import argparse
 import time
 from pathlib import Path
 
-import clip
+
+
 
 import cv2
 import torch
@@ -10,13 +11,12 @@ import torch.backends.cudnn as cudnn
 from numpy import random
 import numpy as np
 
-from models.experimental import attempt_load
-from utils.datasets import LoadStreams, LoadImages
-from utils.general import xyxy2xywh, xywh2xyxy, \
+from yolov5.utils.datasets import LoadStreams, LoadImages
+from yolov5.utils.general import xyxy2xywh, xywh2xyxy, \
     strip_optimizer, set_logging, increment_path, scale_coords
-from utils.plots import plot_one_box
-from utils.torch_utils import select_device, time_synchronized
-from utils.roboflow import predict_image
+from yolov5.utils.plots import plot_one_box
+from yolov5.utils.torch_utils import select_device, time_synchronized
+from yolov5.utils.roboflow import predict_image
 
 # deep sort imports
 from deep_sort import preprocessing, nn_matching
@@ -24,8 +24,12 @@ from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from tools import generate_clip_detections as gdet
 
-from utils.yolov5 import Yolov5Engine
-from utils.yolov4 import Yolov4Engine
+import clip
+
+from yolov5.utils.yolov5 import Yolov5Engine
+from yolov5.utils.yolov4 import Yolov4Engine
+from yolov5.utils.hub import TorchHubEngine
+
 
 classes = []
 
@@ -43,6 +47,7 @@ def update_tracks(tracker, frame_count, save_txt, txt_path, save_img, view_img, 
         class_num = track.class_num
         bbox = xyxy
         class_name = names[int(class_num)] if opt.detection_engine == "yolov5" else class_num
+        print("track bbox",bbox)
         if opt.info:
             print("Tracker ID: {}, Class: {}, BBox Coords (xmin, ymin, xmax, ymax): {}".format(
                 str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
@@ -98,7 +103,8 @@ def detect(save_img=False):
     # calculate cosine distance metric
     metric = nn_matching.NearestNeighborDistanceMetric(
         "cosine", max_cosine_distance, nn_budget)
-    
+
+    source, weights, view_img, save_txt, imgsz = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
     # load yolov5 model here
     if opt.detection_engine == "yolov5":
         yolov5_engine = Yolov5Engine(opt.weights, device, opt.classes, opt.confidence, opt.overlap, opt.agnostic_nms, opt.augment, half)
@@ -106,11 +112,12 @@ def detect(save_img=False):
         names = yolov5_engine.get_names()
     elif opt.detection_engine == "yolov4":
         yolov4_engine = Yolov4Engine(opt.weights, opt.cfg, device, opt.names, opt.classes, opt.confidence, opt.overlap, opt.agnostic_nms, opt.augment, half)
-
+    if opt.detection_engine == "hub":
+        hub_engine = TorchHubEngine(opt.github, opt.type, opt.weights, opt.sourceType, opt.classes, opt.confidence, opt.overlap, opt.augment,imgsz)
     # initialize tracker
     tracker = Tracker(metric)
 
-    source, weights, view_img, save_txt, imgsz = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
+
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
         ('rtsp://', 'rtmp://', 'http://'))
 
@@ -158,105 +165,129 @@ def detect(save_img=False):
         elif opt.detection_engine == "yolov5":
             print("yolov5 inference")
             pred = yolov5_engine.infer(img)
-        else:
+        elif opt.detection_engine == "yolov4":
             print("yolov4 inference {}".format(im0.shape))
             pred = yolov4_engine.infer(im0)
             pred, classes = yolov4_engine.postprocess(pred, im0.shape)
             pred = [torch.tensor(pred)]
+        elif opt.detection_engine == "hub":
+            print("torch hub inference")
+            pred, classes = hub_engine.infer(im0)
 
         t2 = time_synchronized()
         # Process detections
-        for i, det in enumerate(pred):  # detections per image
-            #moved up to roboflow inference
-            """if webcam:  # batch_size >= 1
-                p, s, im0, frame = path[i], '%g: ' % i, im0s[i].copy(
-                ), dataset.count
+
+        """if webcam:  # batch_size >= 1
+            p, s, im0, frame = path[i], '%g: ' % i, im0s[i].copy(
+            ), dataset.count
+        else:
+            p, s, im0, frame = path, '', im0s, getattr(dataset, 'frame', 0)"""
+
+        p = Path(p)  # to Path
+        save_path = str(save_dir / p.name)  # img.jpg
+        txt_path = str(save_dir / 'labels' / p.stem) + \
+            ('' if dataset.mode == 'image' else f'_{frame}')  # img.txt
+
+        # normalization gain whwh
+        gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]
+        if len(pred):
+
+            print("\n[Detections]")
+            if opt.detection_engine == "roboflow":
+                # Print results
+                clss = np.array(classes)
+                for c in np.unique(clss):
+                    n = (clss == c).sum()  # detections per class
+                    s += f'{n} {c}, '  # add to string
+
+                trans_bboxes = pred[:, :4].clone()
+                bboxes = trans_bboxes[:, :4].cpu()
+                confs = pred[:, 4]
+
+            elif opt.detection_engine == "yolov4":
+
+                # Print results
+                # Rescale boxes from img_size to im0 size
+                #det[:, :4] = scale_coords([1,1], det[:, :4], im0.shape).round()
+                clss = np.array(classes)
+                for c in np.unique(clss):
+                    n = (clss == c).sum()  # detections per class
+                    s += f'{n} {c}, '  # add to string
+
+
+                # Transform bboxes from tlbr to tlwh
+                trans_bboxes = pred[:, :4].clone()
+                bboxes = trans_bboxes[:, :4].cpu()
+                confs = pred[:, 4]
+
+                """for idx, box in enumerate(bboxes):
+                    plot_one_box(xywh2xyxy(torch.tensor(box).view(1, 4))[0], im0, label=classes[idx],
+                                 color=get_color_for(classes[idx]), line_thickness=opt.thickness)"""
+
+                print(s)
+            elif opt.detection_engine == "hub":
+
+                # Print results
+                # Rescale boxes from img_size to im0 size
+
+                xs = im0.shape[1]/imgsz
+                ys = im0.shape[0]/imgsz
+                clss = np.array(classes)
+                for c in np.unique(clss):
+                    n = (clss == c).sum()  # detections per class
+                    s += f'{n} {c}, '  # add to string
+
+                # Transform bboxes from bltr to tlwh and perform scale back to im0 size
+                trans_bboxes = pred[:, :4].clone().numpy()
+                trans_bboxes = [[(tb[0]*xs)-(tb[2]*xs)/2, (tb[1]*ys)-(tb[3]*ys)/2, tb[2]*xs, tb[3]*ys] for tb in trans_bboxes if tb[2] > 0 and tb[3] > 0]
+                trans_bboxes = torch.tensor(trans_bboxes)
+                bboxes = trans_bboxes[:, :4].cpu()
+                confs = pred[:, 4]
+
+                print(s)
             else:
-                p, s, im0, frame = path, '', im0s, getattr(dataset, 'frame', 0)"""
 
-            p = Path(p)  # to Path
-            save_path = str(save_dir / p.name)  # img.jpg
-            txt_path = str(save_dir / 'labels' / p.stem) + \
-                ('' if dataset.mode == 'image' else f'_{frame}')  # img.txt
+                # Print results
+                # Rescale boxes from img_size to im0 size
 
-            # normalization gain whwh
-            gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]
-            if len(det):
+                pred[:, :4] = scale_coords(img.shape[2:], pred[:, :4], im0.shape).round()
+                for c in det[:, -1].unique():
+                    n = (det[:, -1] == c).sum()  # detections per class
+                    s += f'{n} {names[int(c)]}s, '  # add to string
 
-                print("\n[Detections]")
-                if opt.detection_engine == "roboflow":
-                    # Print results
-                    clss = np.array(classes)
-                    for c in np.unique(clss):
-                        n = (clss == c).sum()  # detections per class
-                        s += f'{n} {c}, '  # add to string
+                # Transform bboxes from tlbr to tlwh
+                trans_bboxes = det[:, :4].clone()
+                trans_bboxes[:, 2:] -= trans_bboxes[:, :2]
+                bboxes = trans_bboxes[:, :4].cpu()
+                confs = det[:, 4]
+                class_nums = det[:, -1]
+                classes = class_nums
 
-                    trans_bboxes = det[:, :4].clone()
-                    bboxes = trans_bboxes[:, :4].cpu()
-                    confs = det[:, 4]
+                print(s)
 
-                elif opt.detection_engine == "yolov4":
+            # moved up to roboflow inference
 
-                    # Print results
-                    # Rescale boxes from img_size to im0 size
-                    #det[:, :4] = scale_coords([1,1], det[:, :4], im0.shape).round()
-                    clss = np.array(classes)
-                    for c in np.unique(clss):
-                        n = (clss == c).sum()  # detections per class
-                        s += f'{n} {c}, '  # add to string
+            # encode yolo detections and feed to tracker
+            features = encoder(im0, bboxes)
+            detections = [Detection(bbox, conf, class_num, feature) for bbox, conf, class_num, feature in zip(
+                bboxes, confs, classes, features)]
 
-
-                    # Transform bboxes from tlbr to tlwh
-                    trans_bboxes = det[:, :4].clone()
-                    bboxes = trans_bboxes[:, :4].cpu()
-                    confs = det[:, 4]
-
-                    """for idx, box in enumerate(bboxes):
-                        plot_one_box(xywh2xyxy(torch.tensor(box).view(1, 4))[0], im0, label=classes[idx],
-                                     color=get_color_for(classes[idx]), line_thickness=opt.thickness)"""
-
-                    print(s)
-                else:
-
-                    # Print results
-                    # Rescale boxes from img_size to im0 size
-
-                    det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
-                    for c in det[:, -1].unique():
-                        n = (det[:, -1] == c).sum()  # detections per class
-                        s += f'{n} {names[int(c)]}s, '  # add to string
-
-                    # Transform bboxes from tlbr to tlwh
-                    trans_bboxes = det[:, :4].clone()
-                    trans_bboxes[:, 2:] -= trans_bboxes[:, :2]
-                    bboxes = trans_bboxes[:, :4].cpu()
-                    confs = det[:, 4]
-                    class_nums = det[:, -1]
-                    classes = class_nums
-
-                    print(s)
+            # run non-maxima supression
+            boxs = np.array([d.tlwh for d in detections])
+            print(boxs)
+            scores = np.array([d.confidence for d in detections])
+            class_nums = np.array([d.class_num for d in detections])
+            indices = preprocessing.non_max_suppression(
+                boxs, class_nums, nms_max_overlap, scores)
+            detections = [detections[i] for i in indices]
 
 
+            # Call the tracker
+            tracker.predict()
+            tracker.update(detections)
 
-                # encode yolo detections and feed to tracker
-                features = encoder(im0, bboxes)
-                detections = [Detection(bbox, conf, class_num, feature) for bbox, conf, class_num, feature in zip(
-                    bboxes, confs, classes, features)]
-
-                # run non-maxima supression
-                boxs = np.array([d.tlwh for d in detections])
-                scores = np.array([d.confidence for d in detections])
-                class_nums = np.array([d.class_num for d in detections])
-                indices = preprocessing.non_max_suppression(
-                    boxs, class_nums, nms_max_overlap, scores)
-                detections = [detections[i] for i in indices]
-
-                # Call the tracker
-                tracker.predict()
-                tracker.update(detections)
-
-                # update tracks
-                update_tracks(tracker, frame_count, save_txt, txt_path, save_img, view_img, im0, gn)
+            # update tracks
+            update_tracks(tracker, frame_count, save_txt, txt_path, save_img, view_img, im0, gn)
 
             # Print time (inference + NMS)
             print(f'Done. ({t2 - t1:.3f}s)')
@@ -343,6 +374,12 @@ if __name__ == '__main__':
                         help='Maximum size of the appearance descriptors allery. If None, no budget is enforced.')
     parser.add_argument('--api_key', default=None,
                         help='Roboflow API Key.')
+    parser.add_argument('--github', default="ultralytics/yolov5",
+                        help='Torch hub github. ex: ultralytics/yolov5')
+    parser.add_argument('--type', default="yolov5s",
+                        help='Torch hub model type. ex: yolov5s, custom')
+    parser.add_argument('--sourceType', default="github",
+                        help='where to load the modle from. ex: github, local')
     parser.add_argument('--url', default=None,
                         help='Roboflow Model URL.')
     parser.add_argument('--info', action='store_true',
