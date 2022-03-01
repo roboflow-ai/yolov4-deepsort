@@ -242,6 +242,9 @@ def detect(save_img=False):
                 features = encoder(im0, bboxes)
                 detections = [Detection(bbox, conf, class_num, feature) for bbox, conf, class_num, feature in zip(
                     bboxes, confs, classes, features)]
+                
+                if detections.is_cuda:
+                    detections = detections.cpu()
 
                 # run non-maxima supression
                 boxs = np.array([d.tlwh for d in detections])
