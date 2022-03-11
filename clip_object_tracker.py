@@ -231,7 +231,7 @@ def detect(save_img=False):
                     trans_bboxes[:, 2:] -= trans_bboxes[:, :2]
                     bboxes = trans_bboxes[:, :4].cpu()
                     confs = det[:, 4]
-                    class_nums = det[:, -1]
+                    class_nums = det[:, -1].cpu()
                     classes = class_nums
 
                     print(s)
