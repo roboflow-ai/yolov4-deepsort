@@ -238,7 +238,7 @@ def detect(save_img=False):
                     s += f'{n} {c}, '  # add to string
 
                 # Transform bboxes from bltr to tlwh and perform scale back to im0 size
-                trans_bboxes = pred[:, :4].clone().numpy()
+                trans_bboxes = pred[:, :4].clone().cpu().numpy()
                 trans_bboxes = [[(tb[0]*xs)-(tb[2]*xs)/2, (tb[1]*ys)-(tb[3]*ys)/2, tb[2]*xs, tb[3]*ys] for tb in trans_bboxes if tb[2] > 0 and tb[3] > 0]
                 trans_bboxes = torch.tensor(trans_bboxes)
                 bboxes = trans_bboxes[:, :4].cpu()
