@@ -44,7 +44,7 @@ The YOLOv5 implementation is currently compatible with this commit hash of YOLOv
 
 ## Performing Object Tracking
 
-###Clone repositories
+### Clone repositories
 
 ```
 git clone https://github.com/roboflow-ai/zero-shot-object-tracking
@@ -54,21 +54,21 @@ cp -r ./CLIP-repo/clip ./clip             // Unix based
 robocopy CLIP-repo/clip clip\             // Windows
 ```
 
-###Install requirements (python 3.7+)
+### Install requirements (python 3.7+)
 
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-###Install requirements (anaconda python 3.8)
+### Install requirements (anaconda python 3.8)
 ```
 conda install pytorch torchvision torchaudio -c pytorch
 conda install ftfy regex tqdm requests pandas seaborn
 pip install opencv pycocotools tensorflow
 ```
 
-###Run with Roboflow
+### Run with Roboflow
 
 ```bash
 
@@ -77,13 +77,13 @@ python clip_object_tracker.py --source data/video/fish.mp4 --url https://detect.
 
 **NOTE you must provide a valid API key from [Roboflow](docs.roboflow.com)
 
-###Run with YOLOv5
+### Run with YOLOv5
 ```bash
 
 python clip_object_tracker.py --weights models/yolov5s.pt --source data/video/fish.mp4 --detection-engine yolov5 --info
 ```
 
-###Run with YOLOv4
+### Run with YOLOv4
 To use YOLOv4 for object detection you will need pretrained weights (.weights file), a model config for your weights (.cfg), and a class names file (.names). Test weights can be found here https://github.com/AlexeyAB/darknet. [yolov4.weights](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights) [yolov4.cfg](https://raw.githubusercontent.com/AlexeyAB/darknet/master/cfg/yolov4.cfg)
 ```
 python clip_object_tracker.py --weights yolov4.weights --cfg yolov4.cfg --names coco.names --source data/video/cars.mp4 --detection-engine yolov4 --info
