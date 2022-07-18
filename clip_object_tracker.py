@@ -113,6 +113,7 @@ def detect(save_img=False):
     elif opt.detection_engine == "yolov4":
         yolov4_engine = Yolov4Engine(opt.weights, opt.cfg, device, opt.names, opt.classes, opt.confidence, opt.overlap, opt.agnostic_nms, opt.augment, half)
     if opt.detection_engine == "hub":
+        print("initializing torch hub engine")
         hub_engine = TorchHubEngine(opt.github, opt.type, opt.weights, opt.sourceType, opt.classes, opt.confidence, opt.overlap, opt.augment,imgsz)
     # initialize tracker
     tracker = Tracker(metric)
