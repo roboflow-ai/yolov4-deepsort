@@ -51,8 +51,8 @@ def update_tracks(tracker, frame_count, save_txt, txt_path, save_img, view_img, 
             xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
 
             with open(txt_path + '.txt', 'a') as f:
-                f.write('frame: {}; track: {}; class: {}; bbox: {};\n'.format(frame_count, track.track_id, class_num,
-                                                                              *xywh))
+                f.write("Tracker ID: {}, Class: {}, BBox Coords (xmin, ymin, xmax, ymax): {}\n".format(
+                    str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
 
         if save_img or view_img:  # Add bbox to image
             label = f'{class_name} #{track.track_id}'
