@@ -1,5 +1,5 @@
 from yolov5.models.experimental import attempt_load
-from yolov5.utils.general import non_max_suppression
+from utils import non_max_suppression
 
 class Yolov5Engine:
     def __init__(self, weights, device, classes, conf_thres, iou_thres, agnostic_nms, augment, half):

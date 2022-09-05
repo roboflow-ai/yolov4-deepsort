@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from . import general
+from tools import general
 
 
 def fitness(x):

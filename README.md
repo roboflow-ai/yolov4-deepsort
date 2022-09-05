@@ -36,7 +36,7 @@ Your model will be hosted on an inference URL.
 
 ## Performing Object Tracking
 
-###Clone repositories
+### Clone repositories
 
 ```
 git clone https://github.com/roboflow-ai/zero-shot-object-tracking
@@ -69,15 +69,9 @@ python clip_object_tracker.py --source data/video/fish.mp4 --url https://detect.
 
 **NOTE you must provide a valid API key from [Roboflow](docs.roboflow.com)
 
-###Run with Torch Hub Yolov5
-This method allows you to use the latest Yolov5 version found on [Torch Hub](https://pytorch.org/hub/ultralytics_yolov5/). The `github` flag sets the model path on torch hub which is `ultralytics/yolov5` by default. The `type` flag sets the type of model like yolov5s, yolov5l, custom, etc. The default is `yolov5s`. The `sourceType` flag determines where to load the weights from which is either local or github. The default is local which means you have to provide pretrained weights.
-```bash
 
-python clip_object_tracker.py --weights models/yolov5s.pt --source "data/video/cars.mp4" --detection-engine hub --github ultralytics/yolov5 --type yolov5s --sourceType github --info
 
-```
-
-###Run with YOLOv5
+### Run with the latest YOLOv5
 Follow Roboflow's [Train YOLOv5 on Custom Data Tutorial](https://blog.roboflow.com/how-to-train-yolov5-on-a-custom-dataset/).
 The YOLOv5 implementation uses [this colab notebook](https://colab.research.google.com/drive/1gDZ2xcTOgR39tGGs-EZ6i3RTs16wmzZQ). The YOLOv5 implementation is currently compatible with this commit hash of YOLOv5 `886f1c03d839575afecb059accf74296fad395b6`
 ```bash
@@ -85,7 +79,15 @@ The YOLOv5 implementation uses [this colab notebook](https://colab.research.goog
 python clip_object_tracker.py --weights models/yolov5s.pt --source data/video/fish.mp4 --detection-engine yolov5 --info
 ```
 
-###Run with YOLOv4
+### Run with any model on Torch Hub
+This method allows you to use the latest Yolov5 version found on [Torch Hub](https://pytorch.org/hub/ultralytics_yolov5/). The `github` flag sets the model path on torch hub which is `ultralytics/yolov5` by default. The `type` flag sets the type of model like yolov5s, yolov5l, custom, etc. The default is `yolov5s`. The `sourceType` flag determines where to load the weights from which is either local or github. The default is local which means you have to provide pretrained weights.
+```bash
+
+python clip_object_tracker.py --weights models/yolov5s.pt --source "data/video/cars.mp4" --detection-engine hub --github ultralytics/yolov5 --type yolov5s --sourceType github --info
+
+```
+
+### Run with YOLOv4
 To use YOLOv4 for object detection you will need pretrained weights (.weights file), a model config for your weights (.cfg), and a class names file (.names). Test weights can be found here https://github.com/AlexeyAB/darknet. [yolov4.weights](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights) [yolov4.cfg](https://raw.githubusercontent.com/AlexeyAB/darknet/master/cfg/yolov4.cfg)
 ```
 python clip_object_tracker.py --weights yolov4.weights --cfg yolov4.cfg --names coco.names --source data/video/cars.mp4 --detection-engine yolov4 --info

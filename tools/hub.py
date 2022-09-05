@@ -3,10 +3,11 @@ import cv2
 
 class TorchHubEngine:
     def __init__(self, github,type, path, sourceType, classes, conf_thres, iou_thres, augment, size):
-        if sourceType == "local":
-            self.model = torch.hub.load(github, type, path=path, source=sourceType)
+        print("loading weights from ", github, type, path, sourceType)
+        if path:
+            self.model = torch.hub.load(github, type, path=path, source=sourceType, force_reload=True)
         else:
-            self.model = torch.hub.load(github, type, source=sourceType)
+            self.model = torch.hub.load(github, type, source=sourceType, force_reload=True)
         self.model.conf = conf_thres
         self.model.iou = iou_thres
         self.augment = augment

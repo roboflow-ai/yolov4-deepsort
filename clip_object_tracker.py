@@ -11,12 +11,12 @@ import torch.backends.cudnn as cudnn
 from numpy import random
 import numpy as np
 
-from yolov5.utils.datasets import LoadStreams, LoadImages
-from yolov5.utils.general import xyxy2xywh, xywh2xyxy, \
+from tools.datasets import LoadStreams, LoadImages
+from tools.general import xyxy2xywh, xywh2xyxy, \
     strip_optimizer, set_logging, increment_path, scale_coords
-from yolov5.utils.plots import plot_one_box
-from yolov5.utils.torch_utils import select_device, time_synchronized
-from yolov5.utils.roboflow import predict_image
+from tools.plots import plot_one_box
+from tools.torch_utils import select_device, time_synchronized
+from tools.roboflow import predict_image
 
 # deep sort imports
 from deep_sort import preprocessing, nn_matching
@@ -26,9 +26,8 @@ from tools import generate_clip_detections as gdet
 
 import clip
 
-from yolov5.utils.yolov5 import Yolov5Engine
-from yolov5.utils.yolov4 import Yolov4Engine
-from yolov5.utils.hub import TorchHubEngine
+from tools.yolov4 import Yolov4Engine
+from tools.hub import TorchHubEngine
 
 
 classes = []
@@ -105,16 +104,16 @@ def detect(save_img=False):
         "cosine", max_cosine_distance, nn_budget)
 
     source, weights, view_img, save_txt, imgsz = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
-    # load yolov5 model here
-    if opt.detection_engine == "yolov5":
-        yolov5_engine = Yolov5Engine(opt.weights, device, opt.classes, opt.confidence, opt.overlap, opt.agnostic_nms, opt.augment, half)
-        global names
-        names = yolov5_engine.get_names()
-    elif opt.detection_engine == "yolov4":
+    # load object detection model here if necessary
+    if opt.detection_engine == "yolov4":
         yolov4_engine = Yolov4Engine(opt.weights, opt.cfg, device, opt.names, opt.classes, opt.confidence, opt.overlap, opt.agnostic_nms, opt.augment, half)
     if opt.detection_engine == "hub":
         print("initializing torch hub engine")
         hub_engine = TorchHubEngine(opt.github, opt.type, opt.weights, opt.sourceType, opt.classes, opt.confidence, opt.overlap, opt.augment,imgsz)
+    if opt.detection_engine == "yolov5":
+        print("initializing torch hub engine for yolov5")
+        hub_engine = TorchHubEngine("ultralytics/yolov5", opt.type, opt.weights, "github", opt.classes, opt.confidence, opt.overlap, opt.augment,imgsz)
+        opt.detection_engine = "hub"
     # initialize tracker
     tracker = Tracker(metric)
 
@@ -145,8 +144,8 @@ def detect(save_img=False):
 
     frame_count = 0
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
-    if opt.detection_engine == "yolov5":
-        _ = yolov5_engine.infer(img.half() if half else img) if device.type != 'cpu' else None  # run once
+    if opt.detection_engine == "hub":
+        _ = hub_engine.infer(img.half() if half else img) if device.type != 'cpu' else None  # run once
     for path, img, im0s, vid_cap in dataset:
 
         img = torch.from_numpy(img).to(device)
@@ -163,9 +162,6 @@ def detect(save_img=False):
         if opt.detection_engine == "roboflow":
             pred, classes = predict_image(im0, opt.api_key, opt.url, opt.confidence, opt.overlap, frame_count)
             pred = [torch.tensor(pred)]
-        elif opt.detection_engine == "yolov5":
-            print("yolov5 inference")
-            pred = yolov5_engine.infer(img)
         elif opt.detection_engine == "yolov4":
             print("yolov4 inference {}".format(im0.shape))
             pred = yolov4_engine.infer(im0)
@@ -246,25 +242,6 @@ def detect(save_img=False):
                 confs = pred[:, 4]
 
                 print(s)
-            else:
-
-                # Print results
-                # Rescale boxes from img_size to im0 size
-
-                pred[:, :4] = scale_coords(img.shape[2:], pred[:, :4], im0.shape).round()
-                for c in det[:, -1].unique():
-                    n = (det[:, -1] == c).sum()  # detections per class
-                    s += f'{n} {names[int(c)]}s, '  # add to string
-
-                # Transform bboxes from tlbr to tlwh
-                trans_bboxes = det[:, :4].clone()
-                trans_bboxes[:, 2:] -= trans_bboxes[:, :2]
-                bboxes = trans_bboxes[:, :4].cpu()
-                confs = det[:, 4]
-                class_nums = det[:, -1]
-                classes = class_nums
-
-                print(s)
 
             # moved up to roboflow inference
 
@@ -329,7 +306,7 @@ def detect(save_img=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str,
-                        default='yolov5s.pt', help='model.pt path(s)')
+                        default=None, help='model.pt path(s)')
     parser.add_argument('--cfg', type=str,
                         default='yolov4.cfg', help='yolov4 model cfg file path')
     parser.add_argument('--names', type=str,
@@ -380,7 +357,7 @@ if __name__ == '__main__':
     parser.add_argument('--type', default="yolov5s",
                         help='Torch hub model type. ex: yolov5s, custom')
     parser.add_argument('--sourceType', default="github",
-                        help='where to load the modle from. ex: github, local')
+                        help='where to load the model repo from. ex: github, local')
     parser.add_argument('--url', default=None,
                         help='Roboflow Model URL.')
     parser.add_argument('--info', action='store_true',
