@@ -43,7 +43,7 @@ def update_tracks(tracker, frame_count, save_txt, txt_path, save_img, view_img, 
         xyxy = track.to_tlbr()
         class_num = track.class_num
         bbox = xyxy
-        class_name = names[int(class_num)] if opt.detection_engine == "yolov5" else class_num
+        class_name = names[int(class_num)] if opt.detection_engine == "yolov5" or "yolov7" else class_num
         if opt.info:
             print("Tracker ID: {}, Class: {}, BBox Coords (xmin, ymin, xmax, ymax): {}".format(
                 str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
