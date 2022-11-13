@@ -357,7 +357,7 @@ if __name__ == '__main__':
                         help='Roboflow Model URL.')
     parser.add_argument('--info', action='store_true',
                         help='Print debugging info.')
-    parser.add_argument("--detection-engine", default="roboflow", help="Which engine you want to use for object detection (yolov5, yolov4, roboflow).")
+    parser.add_argument("--detection-engine", default="roboflow", help="Which engine you want to use for object detection (yolov7, yolov5, yolov4, roboflow).")
     opt = parser.parse_args()
     print(opt)
 
