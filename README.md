@@ -34,6 +34,12 @@ To use the Roboflow Inference API as your detection engine:
 Upload, annotate, and train your model on Roboflow with [Roboflow Train](https://docs.roboflow.com/train).
 Your model will be hosted on an inference URL.
 
+To use YOLOv7 as your detection engine:
+
+Follow Roboflow's [Train YOLOv7 on Custom Data Tutorial](https://blog.roboflow.com/yolov7-custom-dataset-training-tutorial/)
+
+The YOLOv7 implementation uses [this colab notebook](https://colab.research.google.com/drive/1X9A8odmK4k6l26NDviiT6dd6TgR-piOa)
+
 To use YOLOv5 as your detection engine:
 
 Follow Roboflow's [Train YOLOv5 on Custom Data Tutorial](https://blog.roboflow.com/how-to-train-yolov5-on-a-custom-dataset/)
@@ -76,6 +82,12 @@ python clip_object_tracker.py --source data/video/fish.mp4 --url https://detect.
 ```
 
 **NOTE you must provide a valid API key from [Roboflow](docs.roboflow.com)
+
+### Run with YOLOv7
+```bash
+
+python clip_object_tracker.py --weights models/yolov7.pt --source data/video/fish.mp4 --detection-engine yolov7 --info
+```
 
 ### Run with YOLOv5
 ```bash
@@ -125,7 +137,7 @@ python clip_object_tracker.py -h
 --api_key API_KEY                Roboflow API Key.
 --url URL                        Roboflow Model URL.
 --info                           Print debugging info.
---detection-engine               Which engine you want to use for object detection (yolov5, yolov4, roboflow).
+--detection-engine               Which engine you want to use for object detection (yolov7, yolov5, yolov4, roboflow).
 ```
 ## Acknowledgements
 
@@ -133,5 +145,6 @@ Huge thanks to:
 
 - [yolov4-deepsort by theAIGuysCode](https://github.com/theAIGuysCode/yolov4-deepsort)
 - [yolov5 by ultralytics](https://github.com/ultralytics/yolov5)
+- [yolov7 by WongKinYiu](https://github.com/WongKinYiu/yolov7)
 - [Deep SORT Repository by nwojke](https://github.com/nwojke/deep_sort)
 - [OpenAI for being awesome](https://openai.com/blog/clip/)

@@ -26,6 +26,7 @@ from tools import generate_clip_detections as gdet
 
 from utils.yolov5 import Yolov5Engine
 from utils.yolov4 import Yolov4Engine
+from utils.yolov7 import Yolov7Engine
 
 classes = []
 
@@ -42,7 +43,7 @@ def update_tracks(tracker, frame_count, save_txt, txt_path, save_img, view_img, 
         xyxy = track.to_tlbr()
         class_num = track.class_num
         bbox = xyxy
-        class_name = names[int(class_num)] if opt.detection_engine == "yolov5" else class_num
+        class_name = names[int(class_num)] if opt.detection_engine == "yolov5" or "yolov7" else class_num
         if opt.info:
             print("Tracker ID: {}, Class: {}, BBox Coords (xmin, ymin, xmax, ymax): {}".format(
                 str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
@@ -104,6 +105,10 @@ def detect(save_img=False):
         yolov5_engine = Yolov5Engine(opt.weights, device, opt.classes, opt.confidence, opt.overlap, opt.agnostic_nms, opt.augment, half)
         global names
         names = yolov5_engine.get_names()
+    # load yolov7 model here
+    elif opt.detection_engine == "yolov7":
+        yolov7_engine = Yolov7Engine(opt.weights, device, opt.classes, opt.confidence, opt.overlap, opt.agnostic_nms, opt.augment, half)
+        names = yolov7_engine.get_names()
     elif opt.detection_engine == "yolov4":
         yolov4_engine = Yolov4Engine(opt.weights, opt.cfg, device, opt.names, opt.classes, opt.confidence, opt.overlap, opt.agnostic_nms, opt.augment, half)
 
@@ -139,6 +144,8 @@ def detect(save_img=False):
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     if opt.detection_engine == "yolov5":
         _ = yolov5_engine.infer(img.half() if half else img) if device.type != 'cpu' else None  # run once
+    elif opt.detection_engine == "yolov7":
+        _ = yolov7_engine.infer(img.half() if half else img) if device.type != 'cpu' else None  # run once
     for path, img, im0s, vid_cap in dataset:
 
         img = torch.from_numpy(img).to(device)
@@ -151,13 +158,16 @@ def detect(save_img=False):
         t1 = time_synchronized()
         p, s, im0, frame = path, '', im0s, getattr(dataset, 'frame', 0)
 
-        # choose between prediction engines (yolov5 and roboflow)
+        # choose between prediction engines (roboflow, yolov5, and yolov7)
         if opt.detection_engine == "roboflow":
             pred, classes = predict_image(im0, opt.api_key, opt.url, opt.confidence, opt.overlap, frame_count)
             pred = [torch.tensor(pred)]
         elif opt.detection_engine == "yolov5":
             print("yolov5 inference")
             pred = yolov5_engine.infer(img)
+        elif opt.detection_engine == "yolov7":
+            print("yolov7 inference")
+            pred = yolov7_engine.infer(img)
         else:
             print("yolov4 inference {}".format(im0.shape))
             pred = yolov4_engine.infer(im0)
@@ -347,7 +357,7 @@ if __name__ == '__main__':
                         help='Roboflow Model URL.')
     parser.add_argument('--info', action='store_true',
                         help='Print debugging info.')
-    parser.add_argument("--detection-engine", default="roboflow", help="Which engine you want to use for object detection (yolov5, yolov4, roboflow).")
+    parser.add_argument("--detection-engine", default="roboflow", help="Which engine you want to use for object detection (yolov7, yolov5, yolov4, roboflow).")
     opt = parser.parse_args()
     print(opt)
 
