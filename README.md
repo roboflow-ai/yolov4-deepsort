@@ -79,7 +79,7 @@ e.g.  python3 clip_object_tracker_bbox_only_separate_columns.py --weights models
 ```
 ### In case you need to loop over multiple videos, update the path in run_all.py file and execute the follwoing command
 
-bash run_all.py
+bash run_all_GPU0.py
 
 ```
 ```
