@@ -77,6 +77,12 @@ e.g.  python3 clip_object_tracker_bbox_only_separate_columns.py --weights models
 --info                           Print debugging info.
 --detection-engine               Which engine you want to use for object detection (yolov7, yolov5, yolov4, roboflow).
 ```
+### In case you need to loop over multiple videos, update the path in run_all.py file and execute the follwoing command
+
+bash run_all.py
+
+```
+```
 ## Acknowledgements
 
 Huge thanks to:
