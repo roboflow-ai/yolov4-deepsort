@@ -52,6 +52,12 @@ e.g.  python3 clip_object_tracker_bbox_only_separate_columns.py --weights models
 ### THE DETECTIONS ARE ALWAYS SAVED IN THE /runs/detect FOLDER FOLLOWED BY THE PATH NAME THAT YOU HAVE SPECIFIED. YOU CAN ALSO SPECIFY OTHER PARAMETERS BY LOOKING AT THE VARIOUS ARGUMENTS THAT CAN BE PASSED IN THE clip_object_tracker_bbox_only_separate_columns.py FILE OR AS GIVEN BELOW
 
 ```
+```
+### In case you want to loop over videos in a folder, the bash files can be run by updating the path where all the video files are stored using the following command
+
+bash run_all.py 
+
+```
 --weights WEIGHTS [WEIGHTS ...]  model.pt path(s)
 --source SOURCE                  source (video/image)
 --img-size IMG_SIZE              inference size (pixels)
