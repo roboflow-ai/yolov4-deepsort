@@ -1,57 +1,18 @@
-# Roboflow Object Tracking Example
-
-Object tracking using Roboflow Inference API and Zero-Shot (CLIP) Deep SORT. Read more in our
-[Zero-Shot Object Tracking announcement post](https://blog.roboflow.com/zero-shot-object-tracking/).
-
-![Example fish tracking](https://user-images.githubusercontent.com/870796/130703648-8af62801-d66c-41f5-80ae-889301ae9b44.gif)
-
-Example object tracking courtesy of the [Roboflow Universe public Aquarium model and dataset](https://universe.roboflow.com/brad-dwyer/aquarium-combined). You can adapt this to your own dataset on Roboflow or any pre-trained model from [Roboflow Universe](https://universe.roboflow.com).
-
-# Overview
-
-Object tracking involves following individual objects of interest across frames. It
-combines the output of an [object detection](https://blog.roboflow.com/object-detection) model
-with a secondary algorithm to determine which detections are identifying "the same"
-object over time.
-
-Previously, this required training a special classification model to differentiate
-the instances of each different class. In this repository, we have used
-[OpenAI's CLIP zero-shot image classifier](https://blog.roboflow.com/clip-model-eli5-beginner-guide/)
-to create a universal object tracking repository. All you need is a trained object
-detection model and CLIP handles the instance identification for the object tracking
-algorithm.
-
-# Getting Started
-
-Colab Tutorial Here:
-
-<a href="https://colab.research.google.com/drive/1aU7Jq668oMlUx6bYVv3vAQbXVLpIllNH"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"></a>
-
-## Training your model
-
-To use the Roboflow Inference API as your detection engine:
-
-Upload, annotate, and train your model on Roboflow with [Roboflow Train](https://docs.roboflow.com/train).
-Your model will be hosted on an inference URL.
-
-To use YOLOv7 as your detection engine:
-
-Follow Roboflow's [Train YOLOv7 on Custom Data Tutorial](https://blog.roboflow.com/yolov7-custom-dataset-training-tutorial/)
-
-The YOLOv7 implementation uses [this colab notebook](https://colab.research.google.com/drive/1X9A8odmK4k6l26NDviiT6dd6TgR-piOa)
-
-To use YOLOv5 as your detection engine:
-
-Follow Roboflow's [Train YOLOv5 on Custom Data Tutorial](https://blog.roboflow.com/how-to-train-yolov5-on-a-custom-dataset/)
-
-The YOLOv5 implementation uses [this colab notebook](https://colab.research.google.com/drive/1gDZ2xcTOgR39tGGs-EZ6i3RTs16wmzZQ)
-
-The YOLOv5 implementation is currently compatible with this commit hash of YOLOv5 `886f1c03d839575afecb059accf74296fad395b6`
-
 ## Performing Object Tracking
 
-### Clone repositories
+#### Install Anaconda or miniconda
 
+### Create a virtual environment 
+
+conda create -n myenv <name_of_environment>
+e.g. conda create -n myenv mndot
+
+### Activate virtual environment
+
+conda activate <name_of_environment>
+e.g. conda activate mndot
+
+### Clone repositories in a single folder
 ```
 git clone https://github.com/roboflow-ai/zero-shot-object-tracking
 cd zero-shot-object-tracking
@@ -59,60 +20,43 @@ git clone https://github.com/openai/CLIP.git CLIP-repo
 cp -r ./CLIP-repo/clip ./clip             // Unix based
 robocopy CLIP-repo/clip clip\             // Windows
 ```
-
 ### Install requirements (python 3.7+)
 
 ```bash
 pip install --upgrade pip
 pip install -r requirements.txt
+conda install -c conda-forge scipy
 ```
 
 ### Install requirements (anaconda python 3.8)
 ```
 conda install pytorch torchvision torchaudio -c pytorch
 conda install ftfy regex tqdm requests pandas seaborn
+conda install -c conda-forge scipy
 pip install opencv pycocotools tensorflow
+
 ```
+### Download YOLOv7 weights from
 
-### Run with Roboflow
-
-```bash
-
-python clip_object_tracker.py --source data/video/fish.mp4 --url https://detect.roboflow.com/playing-cards-ow27d/1 --api_key ROBOFLOW_API_KEY --info
-```
-
-**NOTE you must provide a valid API key from [Roboflow](docs.roboflow.com)
+https://github.com/WongKinYiu/yolov7?tab=readme-ov-file
 
 ### Run with YOLOv7
 ```bash
+python clip_object_tracker.py --weights models/yolov7.pt --source data/video/fish.mp4 --detection-engine yolov7 --info 
 
-python clip_object_tracker.py --weights models/yolov7.pt --source data/video/fish.mp4 --detection-engine yolov7 --info
+python3 clip_object_tracker_bbox_only_separate_columns.py --weights <path_to_YOLOv7_weights> --conf 0.5 --save-txt --save-conf --name <name_with_which_outputfile_to_be_saved>--source <source_video_path> --detection-engine yolov7 --info
+
+e.g.  python3 clip_object_tracker_bbox_only_separate_columns.py --weights models/yolov7x.pt --conf 0.5 --save-txt --save-conf --name 10.2_PM_NTOR --source /home/marya/Desktop/zero-shot-object-tracking/data/video/10.2_PM_NTOR.mp4 --detection-engine yolov7 --info
+
 ```
+### THE DETECTIONS ARE ALWAYS SAVED IN THE /runs/detect FOLDER FOLLOWED BY THE PATH NAME THAT YOU HAVE SPECIFIED. YOU CAN ALSO SPECIFY OTHER PARAMETERS BY LOOKING AT THE VARIOUS ARGUMENTS THAT CAN BE PASSED IN THE clip_object_tracker_bbox_only_separate_columns.py FILE OR AS GIVEN BELOW
 
-### Run with YOLOv5
-```bash
-
-python clip_object_tracker.py --weights models/yolov5s.pt --source data/video/fish.mp4 --detection-engine yolov5 --info
 ```
-
-### Run with YOLOv4
-To use YOLOv4 for object detection you will need pretrained weights (.weights file), a model config for your weights (.cfg), and a class names file (.names). Test weights can be found here https://github.com/AlexeyAB/darknet. [yolov4.weights](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights) [yolov4.cfg](https://raw.githubusercontent.com/AlexeyAB/darknet/master/cfg/yolov4.cfg)
 ```
-python clip_object_tracker.py --weights yolov4.weights --cfg yolov4.cfg --names coco.names --source data/video/cars.mp4 --detection-engine yolov4 --info
-```
-(by default, output will be in runs/detect/exp[num])
+### In case you want to loop over videos in a folder, the bash files can be run by updating the path where all the video files are stored using the following command
 
-<figure class="video_container">
-  <video controls="true" allowfullscreen="true" poster="path/to/poster_image.png">
-    <source src="data/demo/cards.mp4" type="video/mp4">
-  </video>
-</figure>
+bash run_all.py 
 
-Help
-
-```bash
-python clip_object_tracker.py -h
-```
 ```
 --weights WEIGHTS [WEIGHTS ...]  model.pt path(s)
 --source SOURCE                  source (video/image)
@@ -138,6 +82,12 @@ python clip_object_tracker.py -h
 --url URL                        Roboflow Model URL.
 --info                           Print debugging info.
 --detection-engine               Which engine you want to use for object detection (yolov7, yolov5, yolov4, roboflow).
+```
+### In case you need to loop over multiple videos, update the path in run_all.py file and execute the follwoing command
+
+bash run_all_GPU0.py
+
+```
 ```
 ## Acknowledgements
 

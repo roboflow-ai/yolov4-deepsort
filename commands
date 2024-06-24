@@ -1,0 +1,17 @@
+#### Create the environment before adding anything #####
+
+conda install -c conda-forge scipy
+
+conda activate mndot_env
+
+https://github.com/roboflow/zero-shot-object-tracking?ref=blog.roboflow.com
+
+python3 clip_object_tracker.py --weights models/yolov7x.pt --conf 0.5 --save-txt --save-conf --name 6-7-13-30 --source /home/marya/Desktop/zero-shot-object-tracking/data/video/YUHAN/NO_TURN_ON_RED_ON_US12_ANALYSIS/PED_ACTIVE/6-7/6-7-13-30.mp4 --detection-engine yolov7 --info 
+
+python3 clip_object_tracker_mod.py --weights models/yolov7x.pt --conf 0.5 --save-txt --save-conf --name 6-7-13-30 --source /home/marya/Desktop/zero-shot-object-tracking/data/video/YUHAN/NO_TURN_ON_RED_ON_US12_ANALYSIS/PED_ACTIVE/6-7/6-7-13-30.mp4 --detection-engine yolov7 --info 
+
+python3 clip_object_tracker_bbox_only.py --weights models/yolov7x.pt --conf 0.5 --save-txt --save-conf --name 6-7-13-30 --source /home/marya/Desktop/zero-shot-object-tracking/data/video/YUHAN/NO_TURN_ON_RED_ON_US12_ANALYSIS/PED_ACTIVE/6-7/6-7-13-30.mp4 --detection-engine yolov7 --info 
+
+python3 clip_object_tracker_bbox_only_separate_columns.py --weights models/yolov7x.pt --conf 0.5 --save-txt --save-conf --name 10.2_PM_NTOR --source /home/marya/Desktop/zero-shot-object-tracking/data/video/10.2_PM_NTOR.mp4 --detection-engine yolov7 --info 
+
+
